@@ -13,4 +13,5 @@ export const env = createEnv({
   },
   client: {},
   experimental__runtimeEnv: {},
+  skipValidation: !!process.env.CI,
 });
