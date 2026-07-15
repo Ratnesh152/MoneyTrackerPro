@@ -41,6 +41,7 @@ jobs:
         run: |
           cp -r public .next/standalone/
           cp -r .next/static .next/standalone/.next/
+          cp web.config .next/standalone/
           cd .next/standalone
           zip -r ../../release.zip .
 
