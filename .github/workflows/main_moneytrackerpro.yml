@@ -28,6 +28,14 @@ jobs:
         run: |
           npm ci
           npm run build
+        env:
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          ENTRA_CLIENT_ID: ${{ secrets.ENTRA_CLIENT_ID }}
+          ENTRA_TENANT_ID: ${{ secrets.ENTRA_TENANT_ID }}
+          ENTRA_CLIENT_SECRET: ${{ secrets.ENTRA_CLIENT_SECRET }}
+          BC_API_URL: ${{ secrets.BC_API_URL }}
+          BC_ENVIRONMENT: ${{ secrets.BC_ENVIRONMENT }}
+          BC_COMPANY_ID: ${{ secrets.BC_COMPANY_ID }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
