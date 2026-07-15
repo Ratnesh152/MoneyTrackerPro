@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - moneytrackerpro
+name: Build and deploy Node.js app to Azure Web App - MoneyTrackerPro
 
 on:
   push:
@@ -11,47 +11,29 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
-          cache: 'npm'
+          node-version: '22.x'
 
       - name: npm install, build, and test
         run: |
-          npm ci
-          npm run build
-        env:
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          ENTRA_CLIENT_ID: ${{ secrets.ENTRA_CLIENT_ID }}
-          ENTRA_TENANT_ID: ${{ secrets.ENTRA_TENANT_ID }}
-          ENTRA_CLIENT_SECRET: ${{ secrets.ENTRA_CLIENT_SECRET }}
-          BC_API_URL: ${{ secrets.BC_API_URL }}
-          BC_ENVIRONMENT: ${{ secrets.BC_ENVIRONMENT }}
-          BC_COMPANY_ID: ${{ secrets.BC_COMPANY_ID }}
-
-      - name: Prepare standalone deployment
-        run: |
-          cp -r public .next/standalone/
-          cp -r .next/static .next/standalone/.next/
-          cp web.config .next/standalone/
-          cd .next/standalone
-          sed -i 's/parseInt(process.env.PORT, 10)/process.env.PORT/g' server.js
-          zip -r ../../release.zip .
-
+          npm install
+          npm run build --if-present
+          npm run test --if-present
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: release.zip
-          include-hidden-files: true
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -69,14 +51,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_62E3EF2E440D427DAF5AC864DCD3FD65 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_880F8B143A674B73B8A5A20FB1B80A70 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9B79A8F7EC154ABD8F5A7B548C6D3026 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DD4276806E4B4EE68F018879633D3F30 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9D94F4D348D64593B87DB037C792BEA9 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A03FBD128DA44AAABCE87C3961C7B307 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
         with:
-          app-name: 'moneytrackerpro'
+          app-name: 'MoneyTrackerPro'
           slot-name: 'Production'
-          package: release.zip
+          package: .
+          
