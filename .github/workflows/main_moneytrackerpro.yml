@@ -37,8 +37,12 @@ jobs:
           BC_ENVIRONMENT: ${{ secrets.BC_ENVIRONMENT }}
           BC_COMPANY_ID: ${{ secrets.BC_COMPANY_ID }}
 
-      - name: Zip deployment package
-        run: zip -r release.zip . -x "*.git*"
+      - name: Prepare standalone deployment
+        run: |
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          cd .next/standalone
+          zip -r ../../release.zip .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
