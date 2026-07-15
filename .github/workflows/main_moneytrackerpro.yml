@@ -43,6 +43,7 @@ jobs:
           cp -r .next/static .next/standalone/.next/
           cp web.config .next/standalone/
           cd .next/standalone
+          sed -i 's/parseInt(process.env.PORT, 10)/process.env.PORT/g' server.js
           zip -r ../../release.zip .
 
       - name: Upload artifact for deployment job
