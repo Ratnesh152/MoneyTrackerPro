@@ -1,11 +1,3 @@
-/**
- * Loan Analytics Service
- *
- * Loads a loan from Business Central and computes all derived analytics
- * (amortization schedule, outstanding principal, progress %, etc.)
- * purely from the stored fields. Makes NO writes to Business Central.
- */
-
 import { getLoan } from './business-central/loan.service';
 import { generateAmortizationSchedule } from './financial-math/amortization';
 import {
@@ -19,22 +11,9 @@ import {
   calculateAmountsPaid,
 } from './financial-math/loan-math';
 import type { LoanAnalytics } from '@/types/loan-analytics.types';
+import { Loan } from '@/types/loan.types';
 
-/**
- * Builds a full LoanAnalytics view model for a given loan.
- *
- * @param systemId           - The loan's SystemId (UUID from BC)
- * @param ownerEntraObjectId - The authenticated user's Entra Object ID (for ownership enforcement)
- * @returns LoanAnalytics view model, or null if loan is not found / access denied
- */
-export async function getLoanAnalytics(
-  systemId: string,
-  ownerEntraObjectId: string
-): Promise<LoanAnalytics | null> {
-  // 1. Fetch loan from BC (ownership check is enforced inside getLoan)
-  const loan = await getLoan(systemId, ownerEntraObjectId);
-  if (!loan) return null;
-
+export function calculateLoanAnalytics(loan: Loan): LoanAnalytics {
   const {
     principalAmount,
     interestRate,
@@ -88,4 +67,14 @@ export async function getLoanAnalytics(
     progressPercent,
     schedule,
   };
+}
+
+export async function getLoanAnalytics(
+  systemId: string,
+  ownerEntraObjectId: string
+): Promise<LoanAnalytics | null> {
+  const loan = await getLoan(systemId, ownerEntraObjectId);
+  if (!loan) return null;
+
+  return calculateLoanAnalytics(loan);
 }

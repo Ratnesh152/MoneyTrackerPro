@@ -6,9 +6,10 @@ interface LoanPaymentTableProps {
   history: LoanPaymentHistoryEntry[];
   currencyCode: string;
   onEditPayment: (payment: LoanPaymentHistoryEntry) => void;
+  onReversePayment: (systemId: string, etag: string) => void;
 }
 
-export function LoanPaymentTable({ history, currencyCode, onEditPayment }: LoanPaymentTableProps) {
+export function LoanPaymentTable({ history, currencyCode, onEditPayment, onReversePayment }: LoanPaymentTableProps) {
   if (!history || history.length === 0) {
     return (
       <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
@@ -29,6 +30,7 @@ export function LoanPaymentTable({ history, currencyCode, onEditPayment }: LoanP
             <TableHead className="text-right">Amount</TableHead>
             <TableHead className="text-right">Remaining Bal.</TableHead>
             <TableHead className="text-center">Status</TableHead>
+            <TableHead className="w-16"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -38,6 +40,7 @@ export function LoanPaymentTable({ history, currencyCode, onEditPayment }: LoanP
               payment={payment}
               currencyCode={currencyCode}
               onEdit={onEditPayment}
+              onReverse={onReversePayment}
             />
           ))}
         </TableBody>

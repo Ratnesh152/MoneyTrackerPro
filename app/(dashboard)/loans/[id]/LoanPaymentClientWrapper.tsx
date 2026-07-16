@@ -57,6 +57,21 @@ export function LoanPaymentClientWrapper({
     }
   };
 
+  const handleReversePayment = async (systemId: string, etag: string) => {
+    try {
+      const payment = history.find(p => p.systemId === systemId);
+      if (!payment) return;
+      const res = await updateLoanPaymentAction(systemId, loanSystemId, etag, {
+        ...payment,
+        status: 'Cancelled'
+      });
+      if (res.success) toast.success('Payment reversed successfully');
+      else toast.error(res.error || 'Failed to reverse payment');
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
+  };
+
   return (
     <LoanPaymentHistory
       history={history}
@@ -64,6 +79,7 @@ export function LoanPaymentClientWrapper({
       defaultEmiNumber={defaultEmiNumber}
       defaultAmount={defaultAmount}
       onRecordPayment={handleRecordPayment}
+      onReversePayment={handleReversePayment}
     />
   );
 }

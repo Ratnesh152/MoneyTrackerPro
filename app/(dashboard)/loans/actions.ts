@@ -80,6 +80,26 @@ export async function recordLoanPaymentAction(data: Omit<BCLoanPaymentCreateDTO,
     };
     
     await createLoanPayment(createData);
+    
+    // Auto-closure logic
+    const { getLoan } = await import('@/services/business-central/loan.service');
+    const { getLoanPayments } = await import('@/services/business-central/loan-payment.service');
+    const { calculateLoanPaymentAnalytics } = await import('@/services/loan-payment-analytics.service');
+    const { calculateLoanAnalytics } = await import('@/services/loan-analytics.service');
+    
+    const [loan, payments] = await Promise.all([
+      getLoan(data.loanSystemId, session.user.id),
+      getLoanPayments(session.user.id, { loanSystemId: data.loanSystemId })
+    ]);
+    
+    if (loan) {
+      const baseAnalytics = calculateLoanAnalytics(loan);
+      const analytics = calculateLoanPaymentAnalytics(baseAnalytics, payments.value);
+      if (analytics.outstandingPrincipal <= 0 && loan.status !== 'Closed') {
+        await updateLoan(data.loanSystemId, session.user.id, { status: 'Closed' }, loan.etag!);
+      }
+    }
+    
     revalidatePath(`/loans/${data.loanSystemId}`);
     return { success: true };
   } catch (error: any) {
@@ -95,6 +115,26 @@ export async function updateLoanPaymentAction(systemId: string, loanSystemId: st
 
   try {
     await updateLoanPayment(systemId, session.user.id, data, etag);
+    
+    // Auto-closure logic
+    const { getLoan } = await import('@/services/business-central/loan.service');
+    const { getLoanPayments } = await import('@/services/business-central/loan-payment.service');
+    const { calculateLoanPaymentAnalytics } = await import('@/services/loan-payment-analytics.service');
+    const { calculateLoanAnalytics } = await import('@/services/loan-analytics.service');
+    
+    const [loan, payments] = await Promise.all([
+      getLoan(loanSystemId, session.user.id),
+      getLoanPayments(session.user.id, { loanSystemId })
+    ]);
+    
+    if (loan) {
+      const baseAnalytics = calculateLoanAnalytics(loan);
+      const analytics = calculateLoanPaymentAnalytics(baseAnalytics, payments.value);
+      if (analytics.outstandingPrincipal <= 0 && loan.status !== 'Closed') {
+        await updateLoan(loanSystemId, session.user.id, { status: 'Closed' }, loan.etag!);
+      }
+    }
+    
     revalidatePath(`/loans/${loanSystemId}`);
     return { success: true };
   } catch (error: any) {

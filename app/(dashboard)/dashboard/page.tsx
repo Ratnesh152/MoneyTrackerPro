@@ -1,22 +1,24 @@
 import React from 'react';
 import { auth } from '@/auth';
-import { getCompanies, getEnvironmentInfo } from '@/services/business-central/system.service';
-import { getDashboardData } from '@/services/dashboard.service';
-import { formatCurrentMonth } from '@/utils/date';
-import { Building, Server } from 'lucide-react';
-import { DashboardCard } from '@/components/shared/DashboardCard';
-import { DashboardSummaryCards } from '@/components/dashboard/DashboardSummaryCards';
-import { IncomeExpenseChart } from '@/components/dashboard/IncomeExpenseChart';
-import { ExpenseCategoryChart } from '@/components/dashboard/ExpenseCategoryChart';
-import { CashFlowChart } from '@/components/dashboard/CashFlowChart';
-import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
-import { AccountsOverview } from '@/components/dashboard/AccountsOverview';
+import { getDashboardAnalytics, DateRangeFilter } from '@/services/dashboard-analytics.service';
+import { DashboardNetWorthCard } from '@/components/dashboard/DashboardNetWorthCard';
+import { CashFlowCard } from '@/components/dashboard/CashFlowCard';
+import { BudgetHealthCard } from '@/components/dashboard/BudgetHealthCard';
+import { LoanSummaryCard } from '@/components/dashboard/LoanSummaryCard';
+import { CreditCardSummaryCard } from '@/components/dashboard/CreditCardSummaryCard';
+import { AccountSummaryCard } from '@/components/dashboard/AccountSummaryCard';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
+import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-
-import { BudgetSummaryWidget } from '@/components/dashboard/BudgetSummaryWidget';
+import { DashboardFilter } from '@/components/dashboard/DashboardFilter';
 import { redirect } from 'next/navigation';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams
+}: {
+  searchParams: { range?: string }
+}) {
   const session = await auth();
   const ownerOid = session?.user?.id;
   
@@ -24,84 +26,64 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const [companies, environment, dashboardData] = await Promise.all([
-    getCompanies(),
-    getEnvironmentInfo(),
-    getDashboardData(ownerOid)
-  ]);
-
-  const currentCompany = companies.length > 0 ? companies[0] : null;
+  const range = (searchParams.range as DateRangeFilter) || 'current_month';
+  const dashboardData = await getDashboardAnalytics(ownerOid, range);
 
   return (
-    <div className="flex flex-col space-y-6">
-      {/* Welcome & System Info Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <DashboardCard className="md:col-span-2 bg-gradient-to-br from-primary/10 via-background to-background">
-          <div className="flex flex-col h-full justify-center">
-            <h2 className="text-3xl font-bold tracking-tight mb-2">
-              Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}!
-            </h2>
-            <p className="text-muted-foreground">
-              Here&apos;s a summary of your financial overview for {formatCurrentMonth()}.
-            </p>
-          </div>
-        </DashboardCard>
-
-        <DashboardCard>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-md text-primary">
-                <Building className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Company</span>
-                <span className="text-sm font-semibold truncate" title={currentCompany?.displayName || currentCompany?.name || 'Unknown'}>
-                  {currentCompany?.displayName || currentCompany?.name || 'Loading...'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-md text-primary">
-                <Server className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Environment</span>
-                <span className="text-sm font-semibold truncate">
-                  {environment.environmentName} (v{environment.version})
-                </span>
-              </div>
-            </div>
-          </div>
-        </DashboardCard>
+    <div className="flex flex-col space-y-6 max-w-[1600px] mx-auto w-full pb-10">
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Here's your financial command center.
+          </p>
+        </div>
+        <DashboardFilter />
       </div>
 
-      {/* Summary Cards */}
-      <DashboardSummaryCards summary={dashboardData.summary} />
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Charts and Overview) - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
-          <IncomeExpenseChart data={dashboardData.charts.incomeVsExpense} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <CashFlowChart data={dashboardData.charts.cashFlow} />
-            <ExpenseCategoryChart data={dashboardData.charts.expenseCategories} />
+      {dashboardData.isEmpty ? (
+        <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-card text-card-foreground shadow-sm">
+          <div className="rounded-full bg-primary/10 p-4 mb-4">
+            <span className="text-primary font-bold text-xl">₹</span>
+          </div>
+          <h3 className="text-lg font-semibold mb-2">No Financial Data Yet</h3>
+          <p className="text-muted-foreground max-w-sm mb-6">
+            Get started by adding your first account, recording a transaction, or creating a budget to see your dashboard come alive.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Top Level KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <DashboardNetWorthCard data={dashboardData.netWorth} />
+            <FinancialHealthScore data={dashboardData.financialHealth} />
           </div>
 
-          <RecentTransactions transactions={dashboardData.recentTransactions} />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <CashFlowCard data={dashboardData.cashFlow} />
+            <AccountSummaryCard data={dashboardData.accountSummary} />
+            <BudgetHealthCard data={dashboardData.budgetHealth} />
+            <LoanSummaryCard data={dashboardData.loanSummary} />
+            <CreditCardSummaryCard data={dashboardData.creditCardSummary} />
+          </div>
 
-        {/* Right Column (Widgets) - 1/3 width */}
-        <div className="space-y-6">
-          <QuickActions />
-          <BudgetSummaryWidget budgetData={dashboardData.budgetAnalytics} />
-          <AccountsOverview accounts={dashboardData.accountsOverview} />
-        </div>
+          {/* Activity and Actions Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <RecentActivity items={dashboardData.recentActivity} />
+            </div>
+            <div className="lg:col-span-1">
+              <QuickActions />
+            </div>
+          </div>
 
-      </div>
+          {/* Charts Row */}
+          <DashboardCharts data={dashboardData.charts} />
+        </>
+      )}
     </div>
   );
 }

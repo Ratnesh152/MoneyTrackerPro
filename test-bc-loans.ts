@@ -37,8 +37,8 @@ async function runTests() {
     };
     
     // Cleanup if exists
-    let existingLoans = await getLoans(OWNER_OID);
-    let existing1 = existingLoans.value.find((l: any) => l.loanAccountNumber === 'HL-12345');
+    const existingLoans = await getLoans(OWNER_OID);
+    const existing1 = existingLoans.value.find((l: any) => l.loanAccountNumber === 'HL-12345');
     if (existing1) {
       await deleteLoan(existing1.systemId, OWNER_OID, existing1.etag);
     }
@@ -63,10 +63,11 @@ async function runTests() {
       status: 'Active',
     };
     
-    existingLoans = await getLoans(OWNER_OID);
-    let existing2 = existingLoans.value.find((l: any) => l.loanAccountNumber === 'PL-98765');
+    const loans = (await getLoans(OWNER_OID)).value;
+    const existing2 = loans.find((l: any) => l.loanName === 'SBI Car Loan');
     if (existing2) {
-      await deleteLoan(existing2.systemId, OWNER_OID, existing2.etag);
+      console.log(`Deleting existing SBI Car Loan (${existing2.systemId})...`);
+      await deleteLoan(existing2.systemId, OWNER_OID, existing2.etag!);
     }
     const newLoan2 = await createLoan(loan2Dto);
     console.log(`✅ Success! Created: ${newLoan2.loanName}`);

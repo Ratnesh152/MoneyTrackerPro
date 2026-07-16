@@ -15,6 +15,7 @@ interface LoanPaymentHistoryProps {
   defaultEmiNumber: number;
   defaultAmount: number;
   onRecordPayment: (data: LoanPaymentFormData, existingSystemId?: string) => Promise<void>;
+  onReversePayment: (systemId: string, etag: string) => Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -24,6 +25,7 @@ export function LoanPaymentHistory({
   defaultEmiNumber,
   defaultAmount,
   onRecordPayment,
+  onReversePayment,
   isSubmitting
 }: LoanPaymentHistoryProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,6 +37,7 @@ export function LoanPaymentHistory({
   };
 
   const handleEdit = (payment: LoanPaymentHistoryEntry) => {
+    if (payment.status === 'Cancelled') return;
     setEditingPayment(payment);
     setIsDialogOpen(true);
   };
@@ -61,6 +64,7 @@ export function LoanPaymentHistory({
             history={history}
             currencyCode={currencyCode}
             onEditPayment={handleEdit}
+            onReversePayment={onReversePayment}
           />
         </CardContent>
       </Card>

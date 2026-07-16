@@ -33,8 +33,8 @@ async function runTests() {
     };
     
     // Cleanup if exists
-    let existingCards = await getCreditCards(OWNER_OID);
-    let existing1 = existingCards.value.find((c: any) => c.issuingBank === 'HDFC Bank' && c.last4Digits === '4455');
+    const existingCards = await getCreditCards(OWNER_OID);
+    const existing1 = existingCards.value.find((c: any) => c.issuingBank === 'HDFC Bank' && c.last4Digits === '4455');
     if (existing1) {
       await deleteCreditCard(existing1.systemId, OWNER_OID, existing1.etag);
     }
@@ -60,10 +60,12 @@ async function runTests() {
       notes: 'For Amazon shopping cashbacks.',
     };
     
-    existingCards = await getCreditCards(OWNER_OID);
-    let existing2 = existingCards.value.find((c: any) => c.issuingBank === 'ICICI Bank' && c.last4Digits === '9012');
+    const creditCardsResponse = await getCreditCards(OWNER_OID);
+    const creditCards = creditCardsResponse.value;
+    const existing2 = creditCards.find((c: any) => c.cardNumber.endsWith('9999'));
     if (existing2) {
-      await deleteCreditCard(existing2.systemId, OWNER_OID, existing2.etag);
+      console.log(`Deleting existing IDFC Card (${existing2.systemId})...`);
+      await deleteCreditCard(existing2.systemId, OWNER_OID, existing2.etag!);
     }
     const newCard2 = await createCreditCard(card2Dto);
     console.log(`✅ Success! Created: ${newCard2.cardName}`);
@@ -86,8 +88,6 @@ async function runTests() {
       isActive: true,
       notes: 'Milestone benefits.',
     };
-    
-    existingCards = await getCreditCards(OWNER_OID);
     let existing3 = existingCards.value.find((c: any) => c.issuingBank === 'American Express' && c.last4Digits === '1005');
     if (existing3) {
       await deleteCreditCard(existing3.systemId, OWNER_OID, existing3.etag);
