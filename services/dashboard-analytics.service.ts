@@ -23,16 +23,8 @@ export async function getDashboardAnalytics(
   ownerEntraObjectId: string,
   dateRange: DateRangeFilter = 'current_month'
 ): Promise<DashboardData> {
-  // 1. Fetch all data concurrently
-  const [
-    accountsRes,
-    transactionsRes,
-    budgetsRes,
-    creditCardsRes,
-    loansRes,
-    loanPaymentsRes,
-    categoriesRes
-  ] = await Promise.all([
+  // 1. Fetch all data concurrently using allSettled to prevent one failure from crashing the dashboard
+  const results = await Promise.allSettled([
     getAccounts(ownerEntraObjectId, { top: 500 }),
     transactionService.getTransactions(ownerEntraObjectId, { top: 2000, orderBy: 'transactionDate_desc' }),
     getBudgets(ownerEntraObjectId, { top: 100 }),
@@ -42,13 +34,17 @@ export async function getDashboardAnalytics(
     getCategories(ownerEntraObjectId, { top: 200 })
   ]);
 
-  const accounts: Account[] = accountsRes.value;
-  const transactions: Transaction[] = transactionsRes.value;
-  const budgets: Budget[] = budgetsRes.value;
-  const creditCards: CreditCard[] = creditCardsRes.value;
-  const loans: Loan[] = loansRes.value;
-  const loanPayments: LoanPayment[] = loanPaymentsRes.value;
-  const categories: Category[] = categoriesRes.value;
+  // Helper to extract value or return empty array if failed
+  const extract = (res: PromiseSettledResult<any>) =>
+    res.status === 'fulfilled' && res.value && Array.isArray(res.value.value) ? res.value.value : [];
+
+  const accounts: Account[] = extract(results[0]);
+  const transactions: Transaction[] = extract(results[1]);
+  const budgets: Budget[] = extract(results[2]);
+  const creditCards: CreditCard[] = extract(results[3]);
+  const loans: Loan[] = extract(results[4]);
+  const loanPayments: LoanPayment[] = extract(results[5]);
+  const categories: Category[] = extract(results[6]);
 
   const categoryMap = new Map<string, Category>(categories.map((c) => [c.systemId, c]));
 
@@ -110,7 +106,7 @@ export async function getDashboardAnalytics(
     // CC Balance calculated from transactions matching category or some other logic
     // We don't have an explicit link in Transaction schema yet, so just use 0 if undefined
     const currentBalance = 0; // Placeholder until CC payments are fully modeled
-    
+
     totalCreditCardBalance += currentBalance;
     totalCreditLimit += cc.creditLimit;
     if (currentBalance > 0) {
@@ -136,7 +132,7 @@ export async function getDashboardAnalytics(
 
   loans.forEach((loan) => {
     if (loan.status === 'Closed') return;
-    
+
     activeLoansCount++;
     const baseAnalytics = calculateLoanAnalytics(loan);
     const paymentsForLoan = loanPayments.filter((p) => p.loanSystemId === loan.systemId);
@@ -182,7 +178,7 @@ export async function getDashboardAnalytics(
       income += t.amount;
     } else if (t.transactionType === 'Expense') {
       expense += t.amount;
-      
+
       const cat = t.categoryId ? categoryMap.get(t.categoryId) : undefined;
       const catName = cat?.name || 'Uncategorized';
       expenseCategoriesMap.set(catName, (expenseCategoriesMap.get(catName) || 0) + t.amount);
@@ -211,10 +207,10 @@ export async function getDashboardAnalytics(
 
   budgets.forEach((b) => {
     totalBudget += b.budgetAmount;
-    
+
     // Calculate used amount for this budget in the CURRENT month (budgets are inherently monthly)
-    const catTxs = transactions.filter((t) => 
-      t.categoryId === b.categoryId && 
+    const catTxs = transactions.filter((t) =>
+      t.categoryId === b.categoryId &&
       t.transactionType === 'Expense' &&
       isSameMonth(parseISO(t.transactionDate), now)
     );
@@ -238,7 +234,7 @@ export async function getDashboardAnalytics(
 
   // --- RECENT ACTIVITY ---
   const recentActivity: RecentActivityItem[] = [];
-  
+
   transactions.slice(0, 20).forEach(t => {
     recentActivity.push({
       id: t.systemId,
@@ -270,7 +266,7 @@ export async function getDashboardAnalytics(
   // --- FINANCIAL HEALTH SCORE ---
   // Score 0-100
   let score = 100;
-  
+
   // Savings Rate (ideal > 20%)
   if (savingsRate < 0) score -= 20;
   else if (savingsRate < 10) score -= 10;
@@ -326,12 +322,12 @@ export async function getDashboardAnalytics(
   for (let i = 5; i >= 0; i--) {
     const m = subMonths(now, i);
     const mStr = m.toISOString().substring(0, 7);
-    
+
     // Calculate historical for this exact month
     const mIncome = transactions.filter(t => t.transactionType === 'Income' && t.transactionDate.startsWith(mStr)).reduce((s, t) => s + t.amount, 0);
     const mExpenseTxs = transactions.filter(t => t.transactionType === 'Expense' && t.transactionDate.startsWith(mStr)).reduce((s, t) => s + t.amount, 0);
     const mLoan = loanPayments.filter(p => p.paymentDate?.startsWith(mStr) && p.status !== 'Cancelled').reduce((s, p) => s + p.amountPaid, 0);
-    
+
     monthlyCashFlow.push({
       month: m.toLocaleString('default', { month: 'short' }),
       income: mIncome,
