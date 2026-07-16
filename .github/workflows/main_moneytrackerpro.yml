@@ -28,12 +28,17 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
-      
+          
+      - name: Prepare standalone package
+        run: |
+          if (Test-Path public) { Copy-Item -Path public -Destination .next\standalone\public -Recurse -Force }
+          if (Test-Path .next\static) { Copy-Item -Path .next\static -Destination .next\standalone\.next\static -Recurse -Force }
+          
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: .next/standalone
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +67,3 @@ jobs:
           app-name: 'MoneyTrackerPro'
           slot-name: 'Production'
           package: .
-          
