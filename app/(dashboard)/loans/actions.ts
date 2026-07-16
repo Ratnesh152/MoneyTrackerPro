@@ -60,3 +60,44 @@ export async function deleteLoanAction(systemId: string, etag: string) {
     return { success: false, error: error.message || 'Failed to delete loan' };
   }
 }
+
+import { 
+  createLoanPayment, 
+  updateLoanPayment 
+} from '@/services/business-central/loan-payment.service';
+import { BCLoanPaymentCreateDTO, BCLoanPaymentUpdateDTO } from '@/types/loan-payment.types';
+
+export async function recordLoanPaymentAction(data: Omit<BCLoanPaymentCreateDTO, 'ownerEntraObjectId'>) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  try {
+    const createData: BCLoanPaymentCreateDTO = {
+      ...data,
+      ownerEntraObjectId: session.user.id,
+    };
+    
+    await createLoanPayment(createData);
+    revalidatePath(`/loans/${data.loanSystemId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to record payment' };
+  }
+}
+
+export async function updateLoanPaymentAction(systemId: string, loanSystemId: string, etag: string, data: BCLoanPaymentUpdateDTO) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  try {
+    await updateLoanPayment(systemId, session.user.id, data, etag);
+    revalidatePath(`/loans/${loanSystemId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update payment' };
+  }
+}
