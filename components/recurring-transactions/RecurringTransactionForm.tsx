@@ -88,7 +88,7 @@ export function RecurringTransactionForm({
             control={control}
             name="transactionType"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
@@ -109,7 +109,7 @@ export function RecurringTransactionForm({
             control={control}
             name="accountId"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Account" />
                 </SelectTrigger>
@@ -133,7 +133,7 @@ export function RecurringTransactionForm({
             control={control}
             name="categoryId"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
@@ -164,7 +164,7 @@ export function RecurringTransactionForm({
             control={control}
             name="frequency"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Frequency" />
                 </SelectTrigger>

@@ -97,7 +97,7 @@ export function LoanPaymentForm({
             control={control}
             name="status"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPaid && initialData?.status !== 'Cancelled'}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={isPaid && initialData?.status !== 'Cancelled'}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -120,7 +120,7 @@ export function LoanPaymentForm({
             control={control}
             name="paymentMethod"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>

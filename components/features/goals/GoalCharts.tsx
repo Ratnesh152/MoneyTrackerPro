@@ -39,7 +39,7 @@ export function GoalCharts({ analytics, targetAmount }: GoalChartsProps) {
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
+                formatter={(value: any) => `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
               />
               <Legend />
             </PieChart>

@@ -12,13 +12,13 @@ export default async function GoalsPage() {
     redirect('/login');
   }
 
-  const goals = await savingsGoalService.getSavingsGoalsByOwner(session.user.id, session.accessToken);
+  const goals = await savingsGoalService.getSavingsGoalsByOwner(session.user.id);
 
   async function createGoal(dto: BCSavingsGoalCreateDTO) {
     'use server';
     const s = await auth();
     if (!s?.accessToken) return { success: false, error: 'Unauthorized' };
-    const res = await savingsGoalService.createSavingsGoal(dto, s.accessToken);
+    const res = await savingsGoalService.createSavingsGoal(dto);
     if (res.success) revalidatePath('/goals');
     return res;
   }
@@ -27,7 +27,7 @@ export default async function GoalsPage() {
     'use server';
     const s = await auth();
     if (!s?.accessToken) return { success: false, error: 'Unauthorized' };
-    const res = await savingsGoalService.updateSavingsGoal(systemId, dto, etag, s.accessToken);
+    const res = await savingsGoalService.updateSavingsGoal(systemId, s.user?.id || '', dto, etag);
     if (res.success) revalidatePath('/goals');
     return res;
   }
@@ -36,7 +36,7 @@ export default async function GoalsPage() {
     'use server';
     const s = await auth();
     if (!s?.accessToken) return { success: false, error: 'Unauthorized' };
-    const res = await savingsGoalService.deleteSavingsGoal(systemId, etag, s.accessToken);
+    const res = await savingsGoalService.deleteSavingsGoal(systemId, s.user?.id || '', etag);
     if (res.success) revalidatePath('/goals');
     return res;
   }
