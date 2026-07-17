@@ -1,3 +1,5 @@
+import { SavingsGoal } from './goal.types';
+
 export interface NetWorthSummary {
   assets: number;
   liabilities: number;
@@ -81,6 +83,7 @@ export interface DashboardData {
   financialHealth: FinancialHealth;
   recentActivity: RecentActivityItem[];
   upcomingItems: UpcomingItem[];
+  savingsGoals: SavingsGoal[];
   charts: DashboardChartsData;
   isEmpty: boolean;
 }

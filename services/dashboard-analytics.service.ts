@@ -17,8 +17,9 @@ import { LoanPayment } from '@/types/loan-payment.types';
 import { Category } from '@/types/category.types';
 import { isWithinInterval, startOfMonth, endOfMonth, subMonths, startOfYear, parseISO, isSameMonth } from 'date-fns';
 import { getRecurringTransactions } from './business-central/recurring-transaction.service';
-import { RecurringTransaction } from '@/types/recurring-transaction.types';
 import { UpcomingItem } from '@/types/dashboard.types';
+import { savingsGoalService } from './business-central/goal.service';
+import { SavingsGoal } from '@/types/goal.types';
 
 export type DateRangeFilter = 'current_month' | 'last_3_months' | 'ytd' | 'all_time';
 
@@ -35,7 +36,8 @@ export async function getDashboardAnalytics(
     getLoans(ownerEntraObjectId, { top: 100 }),
     getLoanPayments(ownerEntraObjectId, { top: 2000, sort: 'paymentDate_desc' }),
     getCategories(ownerEntraObjectId, { top: 200 }),
-    getRecurringTransactions(ownerEntraObjectId, { activeOnly: true })
+    getRecurringTransactions(ownerEntraObjectId, { activeOnly: true }),
+    savingsGoalService.getSavingsGoalsByOwner(ownerEntraObjectId)
   ]);
 
   // Helper to extract value or return empty array if failed
@@ -50,6 +52,7 @@ export async function getDashboardAnalytics(
   const loanPayments: LoanPayment[] = extract(results[5]);
   const categories: Category[] = extract(results[6]);
   const recurringTransactions: RecurringTransaction[] = extract(results[7]);
+  const savingsGoals: SavingsGoal[] = extract(results[8]);
 
   const categoryMap = new Map<string, Category>(categories.map((c) => [c.systemId, c]));
 
@@ -431,6 +434,7 @@ export async function getDashboardAnalytics(
     },
     recentActivity: latestActivity,
     upcomingItems: upcomingTop5,
+    savingsGoals,
     charts: {
       netWorthTrend,
       monthlyCashFlow,

@@ -13,6 +13,7 @@ import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScor
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardFilter } from '@/components/dashboard/DashboardFilter';
+import { GoalSummaryCard } from '@/components/dashboard/GoalSummaryCard';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage({
@@ -63,10 +64,11 @@ export default async function DashboardPage({
             <FinancialHealthScore data={dashboardData.financialHealth} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <CashFlowCard data={dashboardData.cashFlow} />
             <AccountSummaryCard data={dashboardData.accountSummary} />
             <BudgetHealthCard data={dashboardData.budgetHealth} />
+            <GoalSummaryCard goals={dashboardData.savingsGoals} />
             <LoanSummaryCard data={dashboardData.loanSummary} />
             <CreditCardSummaryCard data={dashboardData.creditCardSummary} />
           </div>
