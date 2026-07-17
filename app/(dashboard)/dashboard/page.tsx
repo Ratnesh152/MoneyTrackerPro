@@ -8,6 +8,7 @@ import { LoanSummaryCard } from '@/components/dashboard/LoanSummaryCard';
 import { CreditCardSummaryCard } from '@/components/dashboard/CreditCardSummaryCard';
 import { AccountSummaryCard } from '@/components/dashboard/AccountSummaryCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { UpcomingItems } from '@/components/dashboard/UpcomingItems';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -71,9 +72,12 @@ export default async function DashboardPage({
           </div>
 
           {/* Activity and Actions Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-2">
               <RecentActivity items={dashboardData.recentActivity} />
+            </div>
+            <div className="lg:col-span-1">
+              <UpcomingItems items={dashboardData.upcomingItems} />
             </div>
             <div className="lg:col-span-1">
               <QuickActions />

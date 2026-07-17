@@ -63,6 +63,14 @@ export interface DashboardChartsData {
   assetDistribution: { name: string; amount: number }[];
 }
 
+export interface UpcomingItem {
+  id: string;
+  title: string;
+  amount: number;
+  date: string;
+  type: 'Recurring' | 'EMI';
+}
+
 export interface DashboardData {
   netWorth: NetWorthSummary;
   cashFlow: CashFlowSummary;
@@ -72,6 +80,7 @@ export interface DashboardData {
   accountSummary: AccountDashboardSummary;
   financialHealth: FinancialHealth;
   recentActivity: RecentActivityItem[];
+  upcomingItems: UpcomingItem[];
   charts: DashboardChartsData;
   isEmpty: boolean;
 }

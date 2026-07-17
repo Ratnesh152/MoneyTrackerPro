@@ -16,6 +16,9 @@ import { Loan } from '@/types/loan.types';
 import { LoanPayment } from '@/types/loan-payment.types';
 import { Category } from '@/types/category.types';
 import { isWithinInterval, startOfMonth, endOfMonth, subMonths, startOfYear, parseISO, isSameMonth } from 'date-fns';
+import { getRecurringTransactions } from './business-central/recurring-transaction.service';
+import { RecurringTransaction } from '@/types/recurring-transaction.types';
+import { UpcomingItem } from '@/types/dashboard.types';
 
 export type DateRangeFilter = 'current_month' | 'last_3_months' | 'ytd' | 'all_time';
 
@@ -31,7 +34,8 @@ export async function getDashboardAnalytics(
     getCreditCards(ownerEntraObjectId, { top: 100 }),
     getLoans(ownerEntraObjectId, { top: 100 }),
     getLoanPayments(ownerEntraObjectId, { top: 2000, sort: 'paymentDate_desc' }),
-    getCategories(ownerEntraObjectId, { top: 200 })
+    getCategories(ownerEntraObjectId, { top: 200 }),
+    getRecurringTransactions(ownerEntraObjectId, { activeOnly: true })
   ]);
 
   // Helper to extract value or return empty array if failed
@@ -45,6 +49,7 @@ export async function getDashboardAnalytics(
   const loans: Loan[] = extract(results[4]);
   const loanPayments: LoanPayment[] = extract(results[5]);
   const categories: Category[] = extract(results[6]);
+  const recurringTransactions: RecurringTransaction[] = extract(results[7]);
 
   const categoryMap = new Map<string, Category>(categories.map((c) => [c.systemId, c]));
 
@@ -263,6 +268,54 @@ export async function getDashboardAnalytics(
   recentActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const latestActivity = recentActivity.slice(0, 10);
 
+  // --- UPCOMING ITEMS ---
+  const upcomingItems: UpcomingItem[] = [];
+  
+  recurringTransactions.forEach(rt => {
+    if (rt.active && rt.nextRunDate) {
+      upcomingItems.push({
+        id: rt.systemId,
+        type: 'Recurring',
+        title: rt.name,
+        amount: rt.amount,
+        date: rt.nextRunDate
+      });
+    }
+  });
+
+  loans.forEach((loan) => {
+    if (loan.status === 'Closed') return;
+    const baseAnalytics = calculateLoanAnalytics(loan);
+    const paymentsForLoan = loanPayments.filter((p) => p.loanSystemId === loan.systemId);
+    const analytics = calculateLoanPaymentAnalytics(baseAnalytics, paymentsForLoan);
+    const nextEmiRow = baseAnalytics.schedule.find((s) => s.month === analytics.currentEMI);
+    
+    if (nextEmiRow) {
+      // Check if it's already paid this month
+      const alreadyPaid = paymentsForLoan.some(p => p.status !== 'Cancelled' && p.paymentDate?.startsWith(nextEmiRow.date.substring(0, 7)));
+      if (!alreadyPaid) {
+        upcomingItems.push({
+          id: `emi-${loan.systemId}`,
+          type: 'EMI',
+          title: `EMI: ${loan.lenderName}`,
+          amount: nextEmiRow.emi,
+          date: nextEmiRow.date
+        });
+      }
+    }
+  });
+
+  // Sort upcoming items by date (earliest first)
+  upcomingItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  // Filter out past items that are more than 7 days old to avoid cluttering upcoming with missed things
+  const upcomingFiltered = upcomingItems.filter(item => {
+    const itemDate = new Date(item.date);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return itemDate >= sevenDaysAgo;
+  });
+  const upcomingTop5 = upcomingFiltered.slice(0, 5);
+
   // --- FINANCIAL HEALTH SCORE ---
   // Score 0-100
   let score = 100;
@@ -377,6 +430,7 @@ export async function getDashboardAnalytics(
       status: healthStatus
     },
     recentActivity: latestActivity,
+    upcomingItems: upcomingTop5,
     charts: {
       netWorthTrend,
       monthlyCashFlow,

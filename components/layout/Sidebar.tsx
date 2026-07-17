@@ -16,7 +16,8 @@ import {
   Settings, 
   User,
   LogOut,
-  X
+  X,
+  Repeat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../shared/ThemeToggle';
@@ -32,6 +33,7 @@ const ROUTES = [
   { name: 'Budgets', path: '/budgets', icon: PieChart },
   { name: 'Goals', path: '/goals', icon: Target },
   { name: 'Investments', path: '/investments', icon: TrendingUp },
+  { name: 'Recurring Txns', path: '/recurring-transactions', icon: Repeat },
   { name: 'Reports', path: '/reports', icon: FileText },
 ];
 
